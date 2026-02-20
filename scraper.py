@@ -130,6 +130,23 @@ def run_harvester():
     print("\n=======================================================")
     print("✅ HARVESTER CYCLE COMPLETE. DB UPDATED.")
     print("=======================================================\n")
+    # FORCED TEST PUSH
+    print("🚀 ALX CREATIVE ECONOMY HARVESTER ENGINE INITIATED")
+    save_to_database({
+        "title": "ALX SYSTEM TEST: Live Database Connection",
+        "source": "Terminal Diagnostics",
+        "country": "Global",
+        "type": "System Test",
+        "status": "Open",
+        "sector": "Tech & Innovation",
+        "category": "Business Only",
+        "value": "$1,000,000",
+        "deadline": "Testing",
+        "description": "If you are reading this in Firebase, your Render-to-Firebase pipeline is working flawlessly!",
+        "eligibility": "ALX Developers",
+        "strategicFit": "Verifies backend architecture.",
+        "portalUrl": "https://alxafrica.com"
+    })
 
 if __name__ == "__main__":
     run_harvester()
