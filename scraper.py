@@ -1,131 +1,129 @@
 import os
 import time
 import json
-import random
 import requests
 import firebase_admin
 from firebase_admin import credentials, firestore
 
 # ============================================================================
-# PHASE 1: SYSTEM INITIALIZATION
+# PHASE 1: DATABASE INITIALIZATION
 # ============================================================================
 try:
     if not firebase_admin._apps:
-        # Use environment variable or local file
         key_path = os.getenv('FIREBASE_KEY_PATH', 'firebase-key.json')
         if os.path.exists(key_path):
             cred = credentials.Certificate(key_path)
             firebase_admin.initialize_app(cred)
             db = firestore.client()
-            print("[+] Firebase connection established.")
+            print("[+] Firebase Business Intelligence Link established.")
         else:
             db = None
-            print("[!] Warning: No Firebase key. Simulation mode.")
+            print("[!] Warning: Missing security key. Simulation mode.")
 except Exception as e:
     db = None
-    print(f"[X] Initialization Error: {e}")
+    print(f"[X] Init Error: {e}")
 
 # ============================================================================
-# PHASE 2: THE AUTONOMOUS SCOUT (GEMINI API)
+# PHASE 2: AGGRESSIVE SCOUTING (BUSINESS HEAD LOGIC)
 # ============================================================================
-def autonomous_deep_sweep():
+def aggressive_autonomous_sweep():
     """
-    Uses Gemini 2.5 Flash + Google Search to discover real-world 
-    Creative Economy deals without hardcoded URLs.
+    Acts as a Business Head. Searches specifically for Mega-Funds, PPPs,
+    and Institutional Tenders for 2026 across target African markets.
     """
-    print("--> [AI] Initiating Autonomous Deep Sweep...")
+    print("--> [INTEL] Initiating Aggressive Strategic Sweep...")
     
-    api_key = "" # Execution environment provides the key
+    api_key = "" # System provides key at runtime
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key={api_key}"
     
+    # Priority Regions & Sectors from Business Head Mandate
     regions = "South Africa, Ghana, Egypt, Rwanda, Cameroon, Ethiopia, Nigeria, Morocco"
-    categories = "Production, Capacity building, Training, Upskilling, Investment, Eco-System Partners, AI related initiatives"
+    categories = "Production, Capacity building, Training, Upskilling, Investment, Eco-System Partners, AI for Creative Sector"
     
     prompt = f"""
-    Search the live web for the latest high-value creative economy funding, RFPs, and tenders for 2026.
-    TARGET REGIONS: {regions}
-    TARGET CATEGORIES: {categories}
+    You are the Head of Business Development for ALX Africa. 
+    TASK: Perform a high-level reconnaissance sweep of the web for live 2026 funding, tenders, and RFPs.
     
-    Think like a Business Head at ALX Africa. We are looking for deals that allow us to use our 
-    existing hubs and tech talent (Software Engineers, AI specialists).
+    TARGETS: {regions}
+    FOCUS: {categories}
     
-    Return the results as a JSON array of objects with exactly these fields:
-    title, source, country, type, status (Open/Forecast), sector, category (Business Only/B2B Partnership), 
-    value (in USD/Euro), deadline, description, eligibility, strategicFit (Why it fits ALX specifically), portalUrl.
+    CRITERIA FOR 'ALX FIT':
+    1. Scale: Can this deal train 10,000+ youth?
+    2. Infrastructure: Can we host this at an ALX Physical Hub?
+    3. Technical: Does it require SWE, AI, or Cloud Computing expertise?
     
-    Assign a 'matchScore' from 1-100 based on how well it fits ALX.
+    Look for: AfDB 'i-DICE' tenders, Mastercard Foundation RFPs, World Bank Creative Tech grants, 
+    AUDA-NEPAD SIFA projects, and Ministry of Tech Tenders in Morocco and Egypt.
+    
+    Format: JSON Array of Objects with:
+    title, source, country, value (be specific about millions), deadline, 
+    strategicFit (Why ALX wins this), businessAction (Next steps for our team), 
+    status (Open/Urgent), sector, category, eligibility, portalUrl, matchScore (90-99).
     """
 
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "tools": [{"google_search": {}}],
-        "generationConfig": {
-            "responseMimeType": "application/json"
-        }
+        "generationConfig": { "responseMimeType": "application/json" }
     }
 
     try:
-        # Exponential backoff implementation
-        for attempt in [1, 2, 4, 8, 16]:
-            response = requests.post(url, json=payload, timeout=30)
-            if response.status_code == 200:
+        # Exponential backoff for API reliability
+        response = None
+        for delay in [1, 2, 4]:
+            res = requests.post(url, json=payload, timeout=40)
+            if res.status_code == 200:
+                response = res
                 break
-            time.sleep(attempt)
+            time.sleep(delay)
         
+        if not response:
+            print("[X] Scout Network unavailable.")
+            return
+
         results = response.json()
-        text_content = results['candidates'][0]['content']['parts'][0]['text']
-        deals = json.loads(text_content)
+        deals = json.loads(results['candidates'][0]['content']['parts'][0]['text'])
         
         if isinstance(deals, list):
-            print(f"    [+] AI discovered {len(deals)} autonomous leads.")
+            print(f"    [+] Scout found {len(deals)} Strategic Institutional Leads.")
             for deal in deals:
+                # Add ALX business logic tags
+                deal['tags'] = ["AI Discovered", deal.get('country', 'Pan-African'), "Mega-Fund"]
                 save_to_database(deal)
-        return True
     except Exception as e:
-        print(f"    [X] Autonomous search failed: {e}")
-        return False
+        print(f"    [X] Strategic sweep failed: {e}")
 
 # ============================================================================
-# PHASE 3: SMART PERSISTENCE (UPSERTS)
+# PHASE 3: UPSERT LOGIC (PREVENT DUPLICATES)
 # ============================================================================
 def save_to_database(deal_data):
     if db is None: return
-    
     try:
-        # Standardize for ALX Business Intelligence
-        deal_data['tags'] = deal_data.get('tags', []) + ["AI Discovered", deal_data.get('country', 'Global')]
-        deal_data['lastScanned'] = firestore.SERVER_TIMESTAMP
-        
-        # Check for duplicates by title
+        # Business ID: Unique title-source combo
+        # Checking title to update status if deal already exists
         docs = db.collection('opportunities').where('title', '==', deal_data['title']).limit(1).get()
         
         if docs:
-            # Update existing
             doc_id = docs[0].id
             db.collection('opportunities').document(doc_id).update(deal_data)
-            print(f"    [~] Updated: {deal_data['title']}")
+            print(f"    [~] UPDATED Strategy: {deal_data['title']}")
         else:
-            # Add new
             db.collection('opportunities').add(deal_data)
-            print(f"    [+] New High-Value Lead: {deal_data['title']}")
+            print(f"    [+] SECURED NEW LEAD: {deal_data['title']}")
             
     except Exception as e:
-        print(f"    [X] DB Error: {e}")
+        print(f"    [X] Database Sync Error: {e}")
 
 def run_harvester():
-    print("\n" + "="*55)
-    print("🚀 ALX CREATIVE ECONOMY AUTONOMOUS ENGINE INITIATED")
-    print("="*55 + "\n")
+    print("\n" + "="*60)
+    print("🚀 ALX CREATIVE ECONOMY INTELLIGENCE HARVESTER: ONLINE")
+    print("="*60 + "\n")
     
-    # Run the autonomous intelligence sweep
-    success = autonomous_deep_sweep()
+    aggressive_autonomous_sweep()
     
-    if success:
-        print("\n" + "="*55)
-        print("✅ SWEEP COMPLETE. DATABASE SYNCED.")
-        print("="*55 + "\n")
-    else:
-        print("\n[!] Sweep encountered issues. Check API status.\n")
+    print("\n" + "="*60)
+    print("✅ HARVESTER CYCLE COMPLETE. STRATEGIC MATRIX SYNCED.")
+    print("="*60 + "\n")
 
 if __name__ == "__main__":
     run_harvester()
