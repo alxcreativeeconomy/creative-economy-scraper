@@ -10,7 +10,6 @@ from firebase_admin import credentials, firestore
 # ============================================================================
 try:
     if not firebase_admin._apps:
-        # Render looks for the key at this path
         key_path = os.getenv('FIREBASE_KEY_PATH', 'firebase-key.json')
         if os.path.exists(key_path):
             cred = credentials.Certificate(key_path)
@@ -25,19 +24,17 @@ except Exception as e:
     print(f"[X] Init Error: {e}")
 
 # ============================================================================
-# PHASE 2: GLOBAL-TO-AFRICA SCOUTING (BUSINESS HEAD LOGIC)
+# PHASE 2: GLOBAL-TO-AFRICA SCOUTING
 # ============================================================================
 def aggressive_autonomous_sweep():
-    """
-    Acts as a Business Head. Searches specifically for US and EU Mega-Funds, 
-    USAID/EC Grants, and FDI earmarked for the African Creative & Tech economies.
-    """
     print("--> [INTEL] Initiating Global Inbound Capital Sweep (US/EU -> Africa)...")
     
-    api_key = "AIzaSyDXYq9YL99fGB7sTuMjgKygk4XO0zmjWC8" # System provides key at runtime
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key={api_key}"
+    # Using your API key
+    api_key = "AIzaSyDXYq9YL99fGB7sTuMjgKygk4XO0zmjWC8" 
     
-    # Global to Local Strategy
+    # Switched to the more stable 'gemini-2.5-flash' model
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    
     source_markets = "United States, European Union, United Kingdom"
     target_regions = "Pan-African, South Africa, Ghana, Egypt, Rwanda, Cameroon, Ethiopia, Nigeria, Morocco"
     categories = "Production, Capacity building, Training, Upskilling, Investment, Eco-System Partners, AI related initiatives for the creative sector"
@@ -50,16 +47,10 @@ def aggressive_autonomous_sweep():
     
     CATEGORIES: {categories}
     
-    CRITERIA FOR 'ALX FIT':
-    1. Scale: Can this US/EU capital train 10,000+ African youth or handle multi-million dollar budgets?
-    2. Infrastructure: Can we act as the 'boots-on-the-ground' African execution partner using ALX Physical Hubs?
-    3. Technical: Does it involve AI, Software Engineering, or Cloud Computing?
-    
     Look specifically for: 
     - USAID, USADF, or DFC (US International Development Finance Corp) digital tech grants for Africa.
     - Horizon Europe or European Commission tenders for African digital upskilling.
     - UK FCDO (Foreign, Commonwealth & Development Office) creative economy funds.
-    - US/EU-based private foundations (e.g., Ford, Gates, Skoll) Mega-Funds targeting African youth.
     
     Format the response as a JSON Array of Objects with these fields:
     title, source (The US/EU organization), country (The African target country), value (be specific about millions if possible), deadline, 
@@ -75,47 +66,59 @@ def aggressive_autonomous_sweep():
     }
 
     try:
-        # Exponential backoff for API reliability
         response = None
+        error_message = ""
+        
         for delay in [1, 2, 4]:
             res = requests.post(url, json=payload, timeout=45)
             if res.status_code == 200:
                 response = res
                 break
+            else:
+                # Capture the EXACT error Google is throwing
+                error_message = res.text
             time.sleep(delay)
         
         if not response:
-            print("[X] Scout Network unavailable.")
+            print(f"[X] Scout Network unavailable. Google API Error: {error_message}")
             return
 
         results = response.json()
-        deals = json.loads(results['candidates'][0]['content']['parts'][0]['text'])
+        
+        try:
+            text_content = results['candidates'][0]['content']['parts'][0]['text']
+            # Clean up JSON just in case Gemini adds markdown backticks
+            clean_json = text_content.replace('```json', '').replace('```', '').strip()
+            deals = json.loads(clean_json)
+        except Exception as parse_err:
+            print(f"[X] Failed to parse AI response into JSON: {parse_err}")
+            print(f"Raw Output: {results}")
+            return
         
         if isinstance(deals, list):
             print(f"    [+] Scout found {len(deals)} Global-to-Africa Institutional Leads.")
             for deal in deals:
-                # Add ALX business logic tags identifying foreign capital
                 deal['tags'] = ["Foreign Capital", "AI Discovered", deal.get('country', 'Pan-African')]
                 save_to_database(deal)
+                
     except Exception as e:
-        print(f"    [X] Strategic sweep failed: {e}")
+        print(f"    [X] Strategic sweep failed entirely: {e}")
 
 # ============================================================================
-# PHASE 3: UPSERT LOGIC (PREVENT DUPLICATES)
+# PHASE 3: UPSERT LOGIC
 # ============================================================================
 def save_to_database(deal_data):
     if db is None: return
     try:
-        # Standardize matching by title
-        docs = db.collection('opportunities').where('title', '==', deal_data['title']).limit(1).get()
+        docs = db.collection('opportunities').where('title', '==', deal_data.get('title', '')).limit(1).get()
         
         if docs:
             doc_id = docs[0].id
             db.collection('opportunities').document(doc_id).update(deal_data)
-            print(f"    [~] UPDATED Strategy: {deal_data['title']}")
+            print(f"    [~] UPDATED Strategy: {deal_data.get('title')}")
         else:
             db.collection('opportunities').add(deal_data)
-            print(f"    [+] SECURED NEW GLOBAL LEAD: {deal_data['title']}")
+            print(f"    [+] SECURED NEW GLOBAL LEAD: {deal_data.get('title')}")
             
     except Exception as e:
         print(f"    [X] Database Sync Error: {e}")
@@ -125,7 +128,6 @@ def run_harvester():
     print("🚀 ALX GLOBAL INTELLIGENCE HARVESTER (US/EU -> AFRICA): ONLINE")
     print("="*60 + "\n")
     
-    # Perform the deep global autonomous sweep
     aggressive_autonomous_sweep()
     
     print("\n" + "="*60)
