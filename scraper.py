@@ -29,8 +29,14 @@ except Exception as e:
 def aggressive_autonomous_sweep():
     print("--> [INTEL] Initiating Global Inbound Capital Sweep (US/EU -> Africa)...")
     
-    # Using your API key
-    api_key = "AIzaSyDXYq9YL99fGB7sTuMjgKygk4XO0zmjWC8" 
+    # FIX: Pull the key securely from Render's Environment Variables!
+    # Do NOT paste the actual key here. Let Render inject it securely.
+    api_key = os.getenv("GEMINI_API_KEY")
+    
+    if not api_key:
+        print("[X] ERROR: GEMINI_API_KEY is missing from environment variables.")
+        print("    Please add it to your Render Environment Variables.")
+        return
     
     # Switched to the more stable 'gemini-2.5-flash' model
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
