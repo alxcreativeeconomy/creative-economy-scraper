@@ -10,6 +10,7 @@ from firebase_admin import credentials, firestore
 # ============================================================================
 try:
     if not firebase_admin._apps:
+        # Render looks for the key at this path
         key_path = os.getenv('FIREBASE_KEY_PATH', 'firebase-key.json')
         if os.path.exists(key_path):
             cred = credentials.Certificate(key_path)
@@ -24,41 +25,47 @@ except Exception as e:
     print(f"[X] Init Error: {e}")
 
 # ============================================================================
-# PHASE 2: AGGRESSIVE SCOUTING (BUSINESS HEAD LOGIC)
+# PHASE 2: GLOBAL-TO-AFRICA SCOUTING (BUSINESS HEAD LOGIC)
 # ============================================================================
 def aggressive_autonomous_sweep():
     """
-    Acts as a Business Head. Searches specifically for Mega-Funds, PPPs,
-    and Institutional Tenders for 2026 across target African markets.
+    Acts as a Business Head. Searches specifically for US and EU Mega-Funds, 
+    USAID/EC Grants, and FDI earmarked for the African Creative & Tech economies.
     """
-    print("--> [INTEL] Initiating Aggressive Strategic Sweep...")
+    print("--> [INTEL] Initiating Global Inbound Capital Sweep (US/EU -> Africa)...")
     
     api_key = "" # System provides key at runtime
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key={api_key}"
     
-    # Priority Regions & Sectors from Business Head Mandate
-    regions = "South Africa, Ghana, Egypt, Rwanda, Cameroon, Ethiopia, Nigeria, Morocco"
-    categories = "Production, Capacity building, Training, Upskilling, Investment, Eco-System Partners, AI for Creative Sector"
+    # Global to Local Strategy
+    source_markets = "United States, European Union, United Kingdom"
+    target_regions = "Pan-African, South Africa, Ghana, Egypt, Rwanda, Cameroon, Ethiopia, Nigeria, Morocco"
+    categories = "Production, Capacity building, Training, Upskilling, Investment, Eco-System Partners, AI related initiatives for the creative sector"
     
     prompt = f"""
     You are the Head of Business Development for ALX Africa. 
-    TASK: Perform a high-level reconnaissance sweep of the web for live 2026 funding, tenders, and RFPs.
+    TASK: Perform a deep reconnaissance sweep of the web for live 2026 funding, tenders, and RFPs.
     
-    TARGETS: {regions}
-    FOCUS: {categories}
+    CRITICAL MANDATE: You must search for deals ORIGINATING in the {source_markets} that are explicitly earmarked for investment, aid, or partnership in {target_regions}.
+    
+    CATEGORIES: {categories}
     
     CRITERIA FOR 'ALX FIT':
-    1. Scale: Can this deal train 10,000+ youth?
-    2. Infrastructure: Can we host this at an ALX Physical Hub?
-    3. Technical: Does it require SWE, AI, or Cloud Computing expertise?
+    1. Scale: Can this US/EU capital train 10,000+ African youth or handle multi-million dollar budgets?
+    2. Infrastructure: Can we act as the 'boots-on-the-ground' African execution partner using ALX Physical Hubs?
+    3. Technical: Does it involve AI, Software Engineering, or Cloud Computing?
     
-    Look for: AfDB 'i-DICE' tenders, Mastercard Foundation RFPs, World Bank Creative Tech grants, 
-    AUDA-NEPAD SIFA projects, and Ministry of Tech Tenders in Morocco and Egypt.
+    Look specifically for: 
+    - USAID, USADF, or DFC (US International Development Finance Corp) digital tech grants for Africa.
+    - Horizon Europe or European Commission tenders for African digital upskilling.
+    - UK FCDO (Foreign, Commonwealth & Development Office) creative economy funds.
+    - US/EU-based private foundations (e.g., Ford, Gates, Skoll) Mega-Funds targeting African youth.
     
-    Format: JSON Array of Objects with:
-    title, source, country, value (be specific about millions), deadline, 
-    strategicFit (Why ALX wins this), businessAction (Next steps for our team), 
-    status (Open/Urgent), sector, category, eligibility, portalUrl, matchScore (90-99).
+    Format the response as a JSON Array of Objects with these fields:
+    title, source (The US/EU organization), country (The African target country), value (be specific about millions if possible), deadline, 
+    strategicFit (Explain why ALX is the perfect local execution partner for this foreign capital), 
+    businessAction (Step-by-step next steps for our partnerships team to bid), 
+    status (Open/Urgent/Forecast), sector, category, eligibility, portalUrl, matchScore (90-99).
     """
 
     payload = {
@@ -71,7 +78,7 @@ def aggressive_autonomous_sweep():
         # Exponential backoff for API reliability
         response = None
         for delay in [1, 2, 4]:
-            res = requests.post(url, json=payload, timeout=40)
+            res = requests.post(url, json=payload, timeout=45)
             if res.status_code == 200:
                 response = res
                 break
@@ -85,10 +92,10 @@ def aggressive_autonomous_sweep():
         deals = json.loads(results['candidates'][0]['content']['parts'][0]['text'])
         
         if isinstance(deals, list):
-            print(f"    [+] Scout found {len(deals)} Strategic Institutional Leads.")
+            print(f"    [+] Scout found {len(deals)} Global-to-Africa Institutional Leads.")
             for deal in deals:
-                # Add ALX business logic tags
-                deal['tags'] = ["AI Discovered", deal.get('country', 'Pan-African'), "Mega-Fund"]
+                # Add ALX business logic tags identifying foreign capital
+                deal['tags'] = ["Foreign Capital", "AI Discovered", deal.get('country', 'Pan-African')]
                 save_to_database(deal)
     except Exception as e:
         print(f"    [X] Strategic sweep failed: {e}")
@@ -99,8 +106,7 @@ def aggressive_autonomous_sweep():
 def save_to_database(deal_data):
     if db is None: return
     try:
-        # Business ID: Unique title-source combo
-        # Checking title to update status if deal already exists
+        # Standardize matching by title
         docs = db.collection('opportunities').where('title', '==', deal_data['title']).limit(1).get()
         
         if docs:
@@ -109,16 +115,17 @@ def save_to_database(deal_data):
             print(f"    [~] UPDATED Strategy: {deal_data['title']}")
         else:
             db.collection('opportunities').add(deal_data)
-            print(f"    [+] SECURED NEW LEAD: {deal_data['title']}")
+            print(f"    [+] SECURED NEW GLOBAL LEAD: {deal_data['title']}")
             
     except Exception as e:
         print(f"    [X] Database Sync Error: {e}")
 
 def run_harvester():
     print("\n" + "="*60)
-    print("🚀 ALX CREATIVE ECONOMY INTELLIGENCE HARVESTER: ONLINE")
+    print("🚀 ALX GLOBAL INTELLIGENCE HARVESTER (US/EU -> AFRICA): ONLINE")
     print("="*60 + "\n")
     
+    # Perform the deep global autonomous sweep
     aggressive_autonomous_sweep()
     
     print("\n" + "="*60)
