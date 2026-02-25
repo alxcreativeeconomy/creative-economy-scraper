@@ -34,7 +34,7 @@ def aggressive_autonomous_sweep():
     """
     print("--> [INTEL] Initiating Global Inbound Capital Sweep (US/EU -> Africa)...")
     
-    api_key = "" # System provides key at runtime
+    api_key = "AIzaSyDXYq9YL99fGB7sTuMjgKygk4XO0zmjWC8" # System provides key at runtime
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key={api_key}"
     
     # Global to Local Strategy
