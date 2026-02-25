@@ -63,12 +63,13 @@ def aggressive_autonomous_sweep():
     strategicFit (Explain why ALX is the perfect local execution partner for this foreign capital), 
     businessAction (Step-by-step next steps for our partnerships team to bid), 
     status (Open/Urgent/Forecast), sector, category, eligibility, portalUrl, matchScore (90-99).
+    
+    IMPORTANT: Return ONLY a valid JSON array. Do not include any conversational text before or after the JSON.
     """
 
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
-        "tools": [{"google_search": {}}],
-        "generationConfig": { "responseMimeType": "application/json" }
+        "tools": [{"google_search": {}}]
     }
 
     try:
